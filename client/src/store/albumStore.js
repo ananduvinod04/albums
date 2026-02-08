@@ -1,17 +1,21 @@
 import { create } from "zustand";
+import api from "@/api/api";
 
 export const useAlbumStore = create((set) => ({
   albums: [],
   selectedAlbum: null,
 
-  addAlbum: (name) =>
-    set((state) => ({
-      albums: [
-        ...state.albums,
-        { id: Date.now(), name }
-      ],
-    })),
+  fetchAlbums: async () => {
+    const res = await api.get("/albums");
+    set({ albums: res.data });
+  },
 
-  selectAlbum: (album) =>
-    set({ selectedAlbum: album }),
+  createAlbum: async (name) => {
+    const res = await api.post("/albums", { name });
+    set((state) => ({
+      albums: [...state.albums, res.data],
+    }));
+  },
+
+  selectAlbum: (album) => set({ selectedAlbum: album }),
 }));

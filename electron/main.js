@@ -18,40 +18,63 @@ function createWindow() {
 
 app.whenReady().then(createWindow);
 
-// ---------- IPC: FILE PICKER ----------
+/* ---------- helpers ---------- */
+
+const getMediaDir = () => {
+  const dir = path.join(app.getPath("home"), "AlbumsMedia");
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return dir;
+};
+
+const getTypeFromName = (name) =>
+  name.match(/\.(mp4|webm|mov)$/i) ? "video" : "image";
+
+/* ---------- FILE PICKER ---------- */
+
 ipcMain.handle("pick-media", async () => {
   const result = await dialog.showOpenDialog({
     properties: ["openFile", "multiSelections"],
     filters: [
-      { name: "Media", extensions: ["jpg", "png", "mp4", "webm"] },
+      { name: "Media", extensions: ["jpg", "jpeg", "png", "mp4", "webm", "mov"] },
     ],
   });
 
   if (result.canceled) return [];
 
-  const mediaDir = path.join(
-    app.getPath("home"),
-    "AlbumsMedia"
-  );
+  const mediaDir = getMediaDir();
 
-  if (!fs.existsSync(mediaDir)) {
-    fs.mkdirSync(mediaDir);
-  }
-
-  const savedFiles = [];
-
-  for (const filePath of result.filePaths) {
-    const fileName = path.basename(filePath);
+  return result.filePaths.map((sourcePath) => {
+    const fileName = path.basename(sourcePath);
     const destPath = path.join(mediaDir, fileName);
 
-    fs.copyFileSync(filePath, destPath);
+    if (!fs.existsSync(destPath)) {
+      fs.copyFileSync(sourcePath, destPath);
+    }
 
-    savedFiles.push({
+    return {
       name: fileName,
       path: destPath,
-      type: fileName.endsWith(".mp4") ? "video" : "image",
-    });
-  }
+      type: getTypeFromName(fileName),
+    };
+  });
+});
 
-  return savedFiles;
+/* ---------- DRAG & DROP RESOLVER ---------- */
+
+ipcMain.handle("resolve-dropped-files", async (_, names) => {
+  const mediaDir = getMediaDir();
+
+  return names
+    .map((name) => {
+      const fullPath = path.join(mediaDir, name);
+
+      if (!fs.existsSync(fullPath)) return null;
+
+      return {
+        name: path.basename(fullPath), // 🔥 GUARANTEED NAME
+        path: fullPath,
+        type: getTypeFromName(fullPath),
+      };
+    })
+    .filter(Boolean);
 });

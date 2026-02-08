@@ -1,23 +1,28 @@
 import { Folder } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { useAlbumStore } from "@/store/albumStore";
 
-export default function AlbumCard({ album, isSelected }) {
+export default function AlbumCard({ album, cover }) {
   const selectAlbum = useAlbumStore((s) => s.selectAlbum);
 
   return (
-    <Card
+    <div
       onClick={() => selectAlbum(album)}
-      className={`cursor-pointer p-6 transition hover:shadow-lg ${
-        isSelected ? "ring-2 ring-primary" : ""
-      }`}
+      className="cursor-pointer rounded-lg border p-2 hover:shadow-lg"
     >
-      <div className="flex flex-col items-center gap-2">
-        <Folder size={48} />
-        <p className="font-medium text-center break-words">
-          {album.name}
-        </p>
-      </div>
-    </Card>
+      {cover ? (
+        <img
+          src={`http://localhost:5000${cover.path}`}
+          className="h-32 w-full object-cover rounded"
+        />
+      ) : (
+        <div className="h-32 flex items-center justify-center">
+          <Folder size={48} />
+        </div>
+      )}
+
+      <p className="mt-2 text-center font-medium">
+        {album.name}
+      </p>
+    </div>
   );
 }

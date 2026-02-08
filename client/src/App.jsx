@@ -1,32 +1,35 @@
 import { Button } from "@/components/ui/button";
-import { useAlbumStore } from "@/store/albumStore";
+import { useMediaStore } from "@/store/mediaStore";
 
 function App() {
-  const { albums, addAlbum, selectAlbum, selectedAlbum } =
-    useAlbumStore();
+  const { media, addMediaBatch } = useMediaStore();
+
+  const handleUpload = async () => {
+    const files = await window.electronAPI.pickMedia();
+    addMediaBatch(files);
+  };
 
   return (
-    <div className="h-screen p-6">
-      <div className="flex gap-4 mb-6">
-        <Button onClick={() => addAlbum("My Album")}>
-          Add Album
-        </Button>
-      </div>
+    <div className="p-6">
+      <Button onClick={handleUpload}>Upload Media</Button>
 
-      <div className="flex gap-4">
-        {albums.map((album) => (
-          <Button
-            key={album.id}
-            variant={
-              selectedAlbum?.id === album.id
-                ? "default"
-                : "outline"
-            }
-            onClick={() => selectAlbum(album)}
-          >
-            {album.name}
-          </Button>
-        ))}
+      <div className="grid grid-cols-4 gap-4 mt-6">
+        {media.map((item, i) =>
+          item.type === "image" ? (
+            <img
+              key={i}
+              src={`file://${item.path}`}
+              className="h-40 object-cover rounded"
+            />
+          ) : (
+            <video
+              key={i}
+              src={`file://${item.path}`}
+              controls
+              className="h-40 rounded"
+            />
+          )
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
-const { app, BrowserWindow } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog } = require("electron");
 const path = require("path");
+const fs = require("fs");
 
 let mainWindow;
 
@@ -12,22 +13,45 @@ function createWindow() {
     },
   });
 
-  // Load React dev server
   mainWindow.loadURL("http://localhost:5173");
-
-  mainWindow.on("closed", () => {
-    mainWindow = null;
-  });
 }
 
 app.whenReady().then(createWindow);
 
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
-});
+// ---------- IPC: FILE PICKER ----------
+ipcMain.handle("pick-media", async () => {
+  const result = await dialog.showOpenDialog({
+    properties: ["openFile", "multiSelections"],
+    filters: [
+      { name: "Media", extensions: ["jpg", "png", "mp4", "webm"] },
+    ],
+  });
 
-app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
+  if (result.canceled) return [];
+
+  const mediaDir = path.join(
+    app.getPath("home"),
+    "AlbumsMedia"
+  );
+
+  if (!fs.existsSync(mediaDir)) {
+    fs.mkdirSync(mediaDir);
   }
+
+  const savedFiles = [];
+
+  for (const filePath of result.filePaths) {
+    const fileName = path.basename(filePath);
+    const destPath = path.join(mediaDir, fileName);
+
+    fs.copyFileSync(filePath, destPath);
+
+    savedFiles.push({
+      name: fileName,
+      path: destPath,
+      type: fileName.endsWith(".mp4") ? "video" : "image",
+    });
+  }
+
+  return savedFiles;
 });

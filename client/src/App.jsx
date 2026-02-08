@@ -2,6 +2,10 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAlbumStore } from "@/store/albumStore";
 import { useMediaStore } from "@/store/mediaStore";
+import CreateAlbumDialog from "./components/ui/CreateAlbumDialog";
+import AlbumCard from "./components/ui/AlbumCard";
+
+
 
 function App() {
   const {
@@ -48,25 +52,24 @@ function App() {
   return (
     <div className="p-6">
       {/* Album controls */}
-      <div className="flex gap-3 mb-4">
-        <Button onClick={() => createAlbum("New Album")}>
-          Create Album
-        </Button>
+   <div className="mb-6">
+  {/* Top bar */}
+  <div className="mb-4">
+    <CreateAlbumDialog />
+  </div>
 
-        {albums.map((album) => (
-          <Button
-            key={album._id}
-            variant={
-              selectedAlbum?._id === album._id
-                ? "default"
-                : "outline"
-            }
-            onClick={() => selectAlbum(album)}
-          >
-            {album.name}
-          </Button>
-        ))}
-      </div>
+  {/* Albums grid */}
+  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+    {albums.map((album) => (
+      <AlbumCard
+        key={album._id}
+        album={album}
+        isSelected={selectedAlbum?._id === album._id}
+      />
+    ))}
+  </div>
+</div>
+
 
       {/* Upload */}
       <Button onClick={handleUpload} disabled={!selectedAlbum}>
